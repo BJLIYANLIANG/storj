@@ -83,15 +83,24 @@ func (sdb *StatDB) Create(ctx context.Context, nodeID []byte) (err error) {
 	return err
 }
 
-// Get is used for retrieving a new entry from the stats db
+// Get is used for retrieving an entry from statdb or creating a new one if one does not exist
 func (sdb *StatDB) Get(ctx context.Context, nodeID []byte) (stats *pb.NodeStats, err error) {
 	defer mon.Task()(&ctx)(&err)
 
-	getReq := &pb.GetRequest{
-		NodeId: nodeID,
+	node := &pb.Node{
+		NodeId:             nodeID,
+		UpdateAuditSuccess: false,
+		UpdateUptime:       false,
+	}
+	createIfReq := &pb.CreateEntryIfNotExistsRequest{
+		Node:   node,
 		APIKey: sdb.APIKey,
 	}
-	res, err := sdb.grpcClient.Get(ctx, getReq)
+
+	res, err := sdb.grpcClient.CreateEntryIfNotExists(ctx, createIfReq)
+	if err != nil {
+		return nil, err
+	}
 
 	return res.Stats, err
 }
