@@ -63,7 +63,7 @@ func (c *checker) Run(ctx context.Context) (err error) {
 	}
 }
 
-// IdentifyInjuredSegments checks for missing pieces off of the pointerdb and overlay cache
+// identifyInjuredSegments checks for missing pieces off of the pointerdb and overlay cache
 func (c *checker) identifyInjuredSegments(ctx context.Context) (err error) {
 	defer mon.Task()(&ctx)(&err)
 	c.logger.Debug("entering pointerdb iterate")
@@ -107,7 +107,7 @@ func (c *checker) identifyInjuredSegments(ctx context.Context) (err error) {
 	return err
 }
 
-// returns the indices of offline and online nodes
+// returns the indices of offline nodes
 func (c *checker) offlineNodes(ctx context.Context, nodeIDs []dht.NodeID) (offline []int32, err error) {
 	responses, err := c.overlay.BulkLookup(ctx, nodeIDsToLookupRequests(nodeIDs))
 	if err != nil {
@@ -138,8 +138,4 @@ func lookupResponsesToNodes(responses *pb.LookupResponses) []*pb.Node {
 		nodes = append(nodes, n)
 	}
 	return nodes
-}
-
-func (c *checker) dataAccounting() {
-
 }
