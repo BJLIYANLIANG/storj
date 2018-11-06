@@ -19,11 +19,6 @@ import (
 	"storj.io/storj/storage"
 )
 
-//The Collection Service will continually iterate
-//through our pointer database looking for nodes storing
-//data and updating the granular table with how much a
-//node was storing and when.
-
 // Collector is the interface for the data accounting collector
 type Collector interface {
 	Run(ctx context.Context) error
@@ -81,7 +76,7 @@ func (c *collector) identifyActiveNodes(ctx context.Context) (err error) {
 				pointer := &pb.Pointer{}
 				err = proto.Unmarshal(item.Value, pointer)
 				if err != nil {
-					return collectorErr.New("error unmarshalling pointer %s", err)
+					return Error.New("error unmarshalling pointer %s", err)
 				}
 				pieces := pointer.Remote.RemotePieces
 				var nodeIDs []dht.NodeID
@@ -90,7 +85,7 @@ func (c *collector) identifyActiveNodes(ctx context.Context) (err error) {
 				}
 				online, err := c.onlineNodes(ctx, nodeIDs)
 				if err != nil {
-					return collectorErr.New("error getting online nodes %s", err)
+					return Error.New("error getting online nodes %s", err)
 				}
 				go c.tallyAtRestStorage(pointer, online)
 			}
@@ -114,14 +109,13 @@ func (c *collector) onlineNodes(ctx context.Context, nodeIDs []dht.NodeID) (onli
 	return online, nil
 }
 
-//FUNCTION
-//Iterate through identified nodes.
-//if we have not contacted the node previously this process,
-// validate they are accessible on the network
-//function
-//If reachable, update the granular data table to include
-//the amount stored for this piece.
 func (c *collector) tallyAtRestStorage(pointer *pb.Pointer, nodes []*pb.Node) {
+	//Iterate through identified nodes.
+	//if we have not contacted the node previously this process,
+	// validate they are accessible on the network
+	//function
+	//If reachable, update the granular data table to include
+	//the amount stored for this piece.
 	segmentSize := pointer.GetSize()
 	minReq := pointer.Remote.Redundancy.GetMinReq()
 	if minReq <= 0 {
@@ -130,10 +124,11 @@ func (c *collector) tallyAtRestStorage(pointer *pb.Pointer, nodes []*pb.Node) {
 	}
 	pieceSize := segmentSize / int64(minReq)
 	for _, n := range nodes {
-		fmt.Print(n)
-		fmt.Print(pieceSize)
-		//ping n
-		//if ping successful, c.updateGranularTable(n.Id, pieceSize)
+		fmt.Print(n) //placeholder
+		fmt.Print(pieceSize) //placeholder
+		// lr, err := c.overlay.Lookup(ctx, &pb.LookupRequest{n.Id})?
+		//ping n ?
+		go c.updateGranularTable(n.Id, pieceSize)
 	}
 }
 

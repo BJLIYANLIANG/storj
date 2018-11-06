@@ -10,7 +10,6 @@ import (
 
 // Error is a standard error class for this package.
 var (
-	collectorErr = errs.Class("collector error")
-	rollupErr    = errs.Class("collector error")
-	mon          = monkit.Package()
+	Error = errs.Class("collector error")
+	mon   = monkit.Package()
 )
