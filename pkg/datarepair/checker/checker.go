@@ -15,10 +15,11 @@ import (
 	"storj.io/storj/pkg/node"
 	"storj.io/storj/pkg/pb"
 	"storj.io/storj/pkg/pointerdb"
+	"storj.io/storj/pkg/utils"
 	"storj.io/storj/storage"
 )
 
-// Checker is the interface for the data repair queue
+// Checker is the interface for data repair checker
 type Checker interface {
 	Run(ctx context.Context) error
 }
@@ -88,7 +89,7 @@ func (c *checker) identifyInjuredSegments(ctx context.Context) (err error) {
 				}
 				missingPieces, err := c.offlineNodes(ctx, nodeIDs)
 				if err != nil {
-					return Error.New("error getting missing offline nodes %s", err)
+					return Error.New("error getting offline nodes %s", err)
 				}
 				numHealthy := len(nodeIDs) - len(missingPieces)
 				if int32(numHealthy) < pointer.Remote.Redundancy.RepairThreshold {
@@ -109,33 +110,15 @@ func (c *checker) identifyInjuredSegments(ctx context.Context) (err error) {
 
 // returns the indices of offline nodes
 func (c *checker) offlineNodes(ctx context.Context, nodeIDs []dht.NodeID) (offline []int32, err error) {
-	responses, err := c.overlay.BulkLookup(ctx, nodeIDsToLookupRequests(nodeIDs))
+	responses, err := c.overlay.BulkLookup(ctx, utils.NodeIDsToLookupRequests(nodeIDs))
 	if err != nil {
 		return []int32{}, err
 	}
-	nodes := lookupResponsesToNodes(responses)
+	nodes := utils.LookupResponsesToNodes(responses)
 	for i, n := range nodes {
 		if n == nil {
 			offline = append(offline, int32(i))
 		}
 	}
 	return offline, nil
-}
-
-func nodeIDsToLookupRequests(nodeIDs []dht.NodeID) *pb.LookupRequests {
-	var rq []*pb.LookupRequest
-	for _, v := range nodeIDs {
-		r := &pb.LookupRequest{NodeID: v.String()}
-		rq = append(rq, r)
-	}
-	return &pb.LookupRequests{Lookuprequest: rq}
-}
-
-func lookupResponsesToNodes(responses *pb.LookupResponses) []*pb.Node {
-	var nodes []*pb.Node
-	for _, v := range responses.Lookupresponse {
-		n := v.Node
-		nodes = append(nodes, n)
-	}
-	return nodes
 }
